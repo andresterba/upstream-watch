@@ -1,0 +1,2 @@
+pre_update_command: "ls"
+post_update_command: "docker ps"
