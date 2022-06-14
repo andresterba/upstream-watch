@@ -21,8 +21,8 @@ func TestGetUpdateConfig(t *testing.T) {
 				path: "testdata/update-config.yaml",
 			},
 			want: &UpdateConfig{
-				PreUpdateCommand:  "ls",
-				PostUpdateCommand: "docker ps",
+				PreUpdateCommands:  []string{"docker compose down", "docker compose pull"},
+				PostUpdateCommands: []string{"docker compose up"},
 			},
 			wantErr: false,
 		},

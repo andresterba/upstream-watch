@@ -8,8 +8,8 @@ import (
 )
 
 type UpdateConfig struct {
-	PreUpdateCommand  string `yaml:"pre_update_command,omitempty"`
-	PostUpdateCommand string `yaml:"post_update_command,omitempty"`
+	PreUpdateCommands  []string `yaml:"pre_update_commands,omitempty"`
+	PostUpdateCommands []string `yaml:"post_update_commands,omitempty"`
 }
 
 func GetUpdateConfig(path string) (*UpdateConfig, error) {

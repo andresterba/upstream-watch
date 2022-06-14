@@ -1,2 +1,2 @@
-pre_update_command: "ls"
-post_update_command: "docker ps"
+pre_update_commands: ["docker compose down", "docker compose pull"]
+post_update_commands: ["docker compose up"]
