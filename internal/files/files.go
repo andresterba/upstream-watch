@@ -6,7 +6,7 @@ import (
 )
 
 type DirectoryScanner struct {
-	directoriesToIngore map[string]struct{}
+	directoriesToIgnore map[string]struct{}
 }
 
 func NewDirectoryScanner(directoriesToIgnore []string) *DirectoryScanner {
@@ -19,7 +19,7 @@ func NewDirectoryScanner(directoriesToIgnore []string) *DirectoryScanner {
 	}
 
 	return &DirectoryScanner{
-		directoriesToIngore: directoriesToIgnoreLookupMap,
+		directoriesToIgnore: directoriesToIgnoreLookupMap,
 	}
 }
 
@@ -31,7 +31,7 @@ func (ds *DirectoryScanner) ListDirectories() ([]string, error) {
 	}
 
 	for _, entry := range entries {
-		_, ok := ds.directoriesToIngore[entry.Name()]
+		_, ok := ds.directoriesToIgnore[entry.Name()]
 		if !ok {
 			if entry.IsDir() {
 				subdirectories = append(subdirectories, entry.Name())
