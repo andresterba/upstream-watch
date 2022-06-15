@@ -22,6 +22,14 @@ The target repository could look like this:
     └── upstream-watch
 ```
 
+The `config.yaml` is the main configuration file for this instance of `upstream-watch`.
+You can set the retry interval (in seconds) and folders that should be ignored.
+
+```sh
+    retry_intervall: 10
+    ignore_folders: [".git", ".test"]
+```
+
 There are two services, each in its own subfolder.
 Each of these services holds a `README.md` (which is not interesting), a `docker-compose.yml` that defines
 the containers and a `config.yaml`, which is the configuration file of `upstream-watch` for this specific service.
