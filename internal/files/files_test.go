@@ -23,6 +23,15 @@ func TestNewDirectoryScanner(t *testing.T) {
 				directoriesToIgnore: make(map[string]struct{}),
 			},
 		},
+		{
+			name: "should create a new directory scanner with directories to ignore",
+			args: args{
+				directoriesToIgnore: []string{"test"},
+			},
+			want: &DirectoryScanner{
+				directoriesToIgnore: map[string]struct{}{"test": {}},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
