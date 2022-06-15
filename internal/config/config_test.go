@@ -21,7 +21,7 @@ func TestGetConfig(t *testing.T) {
 				path: "testdata/config.yaml",
 			},
 			want: &Config{
-				RetryIntervall: "1337",
+				RetryIntervall: 1337,
 				IgnoreFolders:  []string{".git", ".test"},
 			},
 			wantErr: false,

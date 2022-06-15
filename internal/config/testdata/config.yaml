@@ -1,2 +1,2 @@
-retry_intervall: "1337"
+retry_intervall: 1337
 ignore_folders: [".git", ".test"]

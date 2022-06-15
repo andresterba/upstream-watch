@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os/exec"
 	"time"
@@ -18,8 +17,6 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("%+v\n", loadedConfig)
-
 		runCommand := exec.Command("git", "pull")
 		output, err := runCommand.CombinedOutput()
 		if err != nil {
@@ -29,11 +26,12 @@ func main() {
 		log.Print("Successfully pulled!")
 
 		ds := files.NewDirectoryScanner(loadedConfig.IgnoreFolders)
-
 		directories, err := ds.ListDirectories()
 		if err != nil {
 			log.Fatalf("failed to list directories\n%s\n", output)
 		}
+
+		db := updater.NewDatabase()
 
 		for _, subdirectory := range directories {
 			updateConfig, err := config.GetUpdateConfig(subdirectory + "/config.yaml")
@@ -41,7 +39,12 @@ func main() {
 				log.Printf("Failed to update submodule %s: %+v", subdirectory, err)
 			}
 
-			updater := updater.NewUpdater(subdirectory, updateConfig.PreUpdateCommands, updateConfig.PostUpdateCommands)
+			updater := updater.NewUpdater(
+				subdirectory,
+				updateConfig.PreUpdateCommands,
+				updateConfig.PostUpdateCommands,
+				db,
+			)
 			err = updater.Update()
 			if err != nil {
 				log.Printf("Failed to update submodule %s: %+v", subdirectory, err)
@@ -51,6 +54,6 @@ func main() {
 			log.Printf("Successfully updated submodule %s", subdirectory)
 		}
 
-		<-time.After(30 * time.Second)
+		<-time.After(loadedConfig.RetryIntervall * time.Second)
 	}
 }

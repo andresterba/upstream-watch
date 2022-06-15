@@ -3,13 +3,14 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	RetryIntervall string   `yaml:"retry_intervall,omitempty"`
-	IgnoreFolders   []string `yaml:"ignore_folders,omitempty"`
+	RetryIntervall time.Duration `yaml:"retry_intervall,omitempty"`
+	IgnoreFolders  []string      `yaml:"ignore_folders,omitempty"`
 }
 
 func GetConfig(path string) (*Config, error) {
