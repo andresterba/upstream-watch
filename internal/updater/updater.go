@@ -40,7 +40,7 @@ func (u *Updater) Update() error {
 	}
 
 	if !updateNecessary {
-		return fmt.Errorf("no update for %s neccesarry", u.moduleName)
+		return fmt.Errorf("no update for %s necessary", u.moduleName)
 	}
 
 	log.Printf("starting update of module %s\n", u.moduleName)

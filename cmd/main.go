@@ -20,10 +20,10 @@ func main() {
 		runCommand := exec.Command("git", "pull")
 		output, err := runCommand.CombinedOutput()
 		if err != nil {
-			log.Fatalf("failed to pull\n%s\n", output)
+			log.Fatalf("Failed to pull upstream repository\n%s\n", output)
 		}
 
-		log.Print("Successfully pulled!")
+		log.Print("Successfully pulled upstream repository")
 
 		ds := files.NewDirectoryScanner(loadedConfig.IgnoreFolders)
 		directories, err := ds.ListDirectories()
