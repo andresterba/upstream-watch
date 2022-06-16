@@ -18,7 +18,7 @@ func TestGetConfig(t *testing.T) {
 		{
 			name: "should parse config",
 			args: args{
-				path: "testdata/config.yaml",
+				path: "testdata/.upstream-watch.yaml",
 			},
 			want: &Config{
 				RetryIntervall: 1337,

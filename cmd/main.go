@@ -12,7 +12,7 @@ import (
 
 func main() {
 	for {
-		loadedConfig, err := config.GetConfig("config.yaml")
+		loadedConfig, err := config.GetConfig(".upstream-watch.yaml")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -34,7 +34,7 @@ func main() {
 		db := updater.NewDatabase()
 
 		for _, subdirectory := range directories {
-			updateConfig, err := config.GetUpdateConfig(subdirectory + "/config.yaml")
+			updateConfig, err := config.GetUpdateConfig(subdirectory + "/.update-hooks.yaml")
 			if err != nil {
 				log.Printf("Failed to update submodule %s: %+v", subdirectory, err)
 			}

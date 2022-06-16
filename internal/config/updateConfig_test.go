@@ -18,7 +18,7 @@ func TestGetUpdateConfig(t *testing.T) {
 		{
 			name: "should parse update config",
 			args: args{
-				path: "testdata/update-config.yaml",
+				path: "testdata/.update-hooks.yaml",
 			},
 			want: &UpdateConfig{
 				PreUpdateCommands:  []string{"docker compose down", "docker compose pull"},

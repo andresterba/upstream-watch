@@ -3,20 +3,20 @@
 `upstream-watch` is a git-ops tool to monitor an upstream repository and execute update steps if necessary.
 It only supports `git`.
 
-I wrote this tool to support my personal container infrastructe, which is completely managed via a single
+I wrote this tool to support my personal container infrastructure, which is completely managed via a single
 git repository.
 The target repository could look like this:
 
 ```sh
     .
-    ├── config.yaml
+    ├── .upstream-watch.yaml
     ├── README.md
     ├── service-1
-    │   ├── config.yaml
+    │   ├── .update-hooks.yaml
     │   ├── docker-compose.yml
     │   └── README.md
     ├── service-2
-    │   ├── config.yaml
+    │   ├── .update-hooks.yaml
     │   ├── docker-compose.yml
     │   └── README.md
     └── upstream-watch
