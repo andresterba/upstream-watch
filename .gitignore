@@ -1,1 +1,6 @@
+# binaries
 upstream-watch
+
+
+# release related
+dist/**
