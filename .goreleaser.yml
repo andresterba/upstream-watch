@@ -2,12 +2,18 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - env:
-      - CGO_ENABLED=0
+  - main: ./cmd/main.go
+    env:
+      # needed for sqlite support
+      - CGO_ENABLED=1
     goos:
       - linux
-      - windows
-      - darwin
+      # not able to build for these plattforms, as sqlite needs cgo
+      #- windows
+      #- darwin
+    goarch:
+      # not able to build ARM or i386, as sqlite needs cgo
+      - amd64
 archives:
   - replacements:
       darwin: Darwin
