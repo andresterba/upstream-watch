@@ -8,7 +8,7 @@ BINARY_NAME=upstream-watch
 
 all: build
 build:
-	$(GOBUILD) -o $(BINARY_NAME) cmd/main.go
+	$(GOBUILD) -ldflags="-extldflags=-static" -tags sqlite_omit_load_extension -o $(BINARY_NAME) cmd/main.go
 test:
 	$(GOTEST) ./...
 clean:
@@ -17,7 +17,7 @@ clean:
 run: build
 	./$(BINARY_NAME)
 localtest: build
-	cp $(BINARY_NAME) ../../upstream-watch-test-repo/
+	cp $(BINARY_NAME) ../../upstream-watch-test-repo
 testcoverage:
 	$(GOTEST) -coverprofile coverage.out ./... && go tool cover -html=coverage.out && rm coverage.out
 lint:
