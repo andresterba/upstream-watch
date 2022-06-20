@@ -9,8 +9,9 @@ import (
 )
 
 type Config struct {
-	RetryIntervall time.Duration `yaml:"retry_intervall,omitempty"`
-	IgnoreFolders  []string      `yaml:"ignore_folders,omitempty"`
+	SingleDirectoryMode bool          `yaml:"single_directory_mode,omitempty"`
+	RetryIntervall      time.Duration `yaml:"retry_intervall,omitempty"`
+	IgnoreFolders       []string      `yaml:"ignore_folders,omitempty"`
 }
 
 func GetConfig(path string) (*Config, error) {

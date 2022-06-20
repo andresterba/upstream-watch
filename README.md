@@ -5,6 +5,30 @@ It only supports `git`.
 
 I wrote this tool to support my personal container infrastructure, which is completely managed via a single
 git repository.
+There are two different modes:
+
+- single directory
+- Subdiretorie per service
+
+## Single directory
+
+The target repository could look like this:
+
+```sh
+    .
+    ├── .upstream-watch.yaml
+    ├── README.md
+    ├── .update-hooks.yaml
+    ├── docker-compose.yml
+    └── upstream-watch
+```
+
+All configuration files are in a single directory, which must be the root of the git directory.
+Use this mode by setting `single_directory_mode: true`.
+The rest of the needed configuration is identical to the subdirectory documentation.
+
+## Use subdirectories for different services
+
 The target repository could look like this:
 
 ```sh
@@ -26,6 +50,7 @@ The `config.yaml` is the main configuration file for this instance of `upstream-
 You can set the retry interval (in seconds) and folders that should be ignored.
 
 ```sh
+    single_directory_mode: false
     retry_intervall: 10
     ignore_folders: [".git", ".test"]
 ```

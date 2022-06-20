@@ -1,0 +1,3 @@
+single_directory_mode: false
+retry_intervall: 1337
+ignore_folders: [".git", ".test"]

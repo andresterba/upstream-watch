@@ -18,11 +18,12 @@ func TestGetConfig(t *testing.T) {
 		{
 			name: "should parse config",
 			args: args{
-				path: "testdata/.upstream-watch.yaml",
+				path: "testdata/.upstream-watch-1.yaml",
 			},
 			want: &Config{
-				RetryIntervall: 1337,
-				IgnoreFolders:  []string{".git", ".test"},
+				SingleDirectoryMode: false,
+				RetryIntervall:      1337,
+				IgnoreFolders:       []string{".git", ".test"},
 			},
 			wantErr: false,
 		},
@@ -33,6 +34,18 @@ func TestGetConfig(t *testing.T) {
 			},
 			want:    nil,
 			wantErr: true,
+		},
+		{
+			name: "should parse config",
+			args: args{
+				path: "testdata/.upstream-watch-2.yaml",
+			},
+			want: &Config{
+				SingleDirectoryMode: true,
+				RetryIntervall:      1337,
+				IgnoreFolders:       []string{".git", ".test"},
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
