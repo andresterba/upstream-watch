@@ -51,7 +51,7 @@ You can set the retry interval (in seconds) and folders that should be ignored.
 
 ```sh
     single_directory_mode: false
-    retry_intervall: 10
+    retry_interval: 10
     ignore_folders: [".git", ".test"]
 ```
 

@@ -22,7 +22,7 @@ func TestGetConfig(t *testing.T) {
 			},
 			want: &Config{
 				SingleDirectoryMode: false,
-				RetryIntervall:      1337,
+				RetryInterval:      1337,
 				IgnoreFolders:       []string{".git", ".test"},
 			},
 			wantErr: false,
@@ -42,7 +42,7 @@ func TestGetConfig(t *testing.T) {
 			},
 			want: &Config{
 				SingleDirectoryMode: true,
-				RetryIntervall:      1337,
+				RetryInterval:      1337,
 				IgnoreFolders:       []string{".git", ".test"},
 			},
 			wantErr: false,
