@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	SingleDirectoryMode bool          `yaml:"single_directory_mode,omitempty"`
-	RetryIntervall      time.Duration `yaml:"retry_intervall,omitempty"`
+	RetryInterval      time.Duration `yaml:"retry_interval,omitempty"`
 	IgnoreFolders       []string      `yaml:"ignore_folders,omitempty"`
 }
 

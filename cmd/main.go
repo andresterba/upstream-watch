@@ -51,7 +51,7 @@ func updateSubdirectories(loadedConfig *config.Config, db updater.Database) {
 		log.Printf("Successfully updated submodule %s", subdirectory)
 	}
 
-	<-time.After(loadedConfig.RetryIntervall * time.Second)
+	<-time.After(loadedConfig.RetryInterval * time.Second)
 }
 
 func updateRootRepository(loadedConfig *config.Config, db updater.Database) {
@@ -77,7 +77,7 @@ func updateRootRepository(loadedConfig *config.Config, db updater.Database) {
 		log.Printf("Successfully updated root")
 	}
 
-	<-time.After(loadedConfig.RetryIntervall * time.Second)
+	<-time.After(loadedConfig.RetryInterval * time.Second)
 }
 
 func main() {
