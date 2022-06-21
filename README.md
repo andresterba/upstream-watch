@@ -46,7 +46,7 @@ The target repository could look like this:
     └── upstream-watch
 ```
 
-The `config.yaml` is the main configuration file for this instance of `upstream-watch`.
+The `.upstream-watch.yaml` is the main configuration file for this instance of `upstream-watch`.
 You can set the retry interval (in seconds) and folders that should be ignored.
 
 ```sh
@@ -57,16 +57,17 @@ You can set the retry interval (in seconds) and folders that should be ignored.
 
 There are two services, each in its own subfolder.
 Each of these services holds a `README.md` (which is not interesting), a `docker-compose.yml` that defines
-the containers and a `config.yaml`, which is the configuration file of `upstream-watch` for this specific service.
+the containers and a `.update-hooks.yaml`, which is the configuration file of `upstream-watch` for this specific service.
 
 In case of an update to any of these files in a subfolder, `upstream-watch` will execute the pre- and post-hooks
-defined in the corresponding `config.yaml`.
+defined in the corresponding `.update-hooks.yaml`.
 
-An example for a `config.yaml`:
+An example for a `.update-hooks.yaml`:
 
 ```sh
-    pre_update_commands: ["docker compose down", "docker compose pull"]
-    post_update_commands: ["docker compose up -d"]
+	pre_update_commands: ["docker compose down"]
+	update_commands: ["docker compose pull"]
+	post_update_commands: ["docker compose up -d"]
 ```
 
 `upstream-watch` will stop all containers, pull updates from the registry and start them afterwards.

@@ -9,6 +9,7 @@ import (
 
 type UpdateConfig struct {
 	PreUpdateCommands  []string `yaml:"pre_update_commands,omitempty"`
+	UpdateCommands  []string `yaml:"update_commands,omitempty"`
 	PostUpdateCommands []string `yaml:"post_update_commands,omitempty"`
 }
 

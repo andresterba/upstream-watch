@@ -1,2 +1,3 @@
-pre_update_commands: ["docker compose down", "docker compose pull"]
+pre_update_commands: ["docker compose down"]
+update_commands: ["docker compose pull"]
 post_update_commands: ["docker compose up"]

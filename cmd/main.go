@@ -38,6 +38,7 @@ func updateSubdirectories(loadedConfig *config.Config, db updater.Database) {
 		updater := updater.NewUpdater(
 			subdirectory,
 			updateConfig.PreUpdateCommands,
+			updateConfig.UpdateCommands,
 			updateConfig.PostUpdateCommands,
 			db,
 		)
@@ -65,6 +66,7 @@ func updateRootRepository(loadedConfig *config.Config, db updater.Database) {
 	updater := updater.NewUpdater(
 		subdirectory,
 		updateConfig.PreUpdateCommands,
+		updateConfig.UpdateCommands,
 		updateConfig.PostUpdateCommands,
 		db,
 	)

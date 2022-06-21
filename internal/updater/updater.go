@@ -8,19 +8,21 @@ import (
 )
 
 type Updater struct {
-	moduleName string
-	preHooks   []string
-	postHooks  []string
-	db         Database
-	dbEntry    Entry
+	moduleName     string
+	preHooks       []string
+	updateCommands []string
+	postHooks      []string
+	db             Database
+	dbEntry        Entry
 }
 
-func NewUpdater(path string, preHooks []string, postHooks []string, db Database) *Updater {
+func NewUpdater(path string, preHooks []string, updateCommands []string, postHooks []string, db Database) *Updater {
 	u := &Updater{
-		moduleName: path,
-		preHooks:   preHooks,
-		postHooks:  postHooks,
-		db:         db,
+		moduleName:     path,
+		preHooks:       preHooks,
+		updateCommands: updateCommands,
+		postHooks:      postHooks,
+		db:             db,
 	}
 
 	entry, err := u.getEntryForModule()
@@ -45,6 +47,11 @@ func (u *Updater) Update() error {
 
 	log.Printf("starting update of module %s\n", u.moduleName)
 	err = u.executePreHooks()
+	if err != nil {
+		return err
+	}
+
+	err = u.executeUpdate()
 	if err != nil {
 		return err
 	}
@@ -83,6 +90,18 @@ func (u *Updater) executePreHooks() error {
 		output, err := u.executeCommand(hookCommandAsString)
 		if err != nil {
 			return fmt.Errorf("failed to execute pre-hook command %s\nerror: %s\noutput: %s", hookCommandAsString, err, output)
+		}
+	}
+
+	return nil
+}
+
+func (u *Updater) executeUpdate() error {
+	for _, hookCommand := range u.updateCommands {
+		commandAsString := strings.Fields(hookCommand)
+		output, err := u.executeCommand(commandAsString)
+		if err != nil {
+			return fmt.Errorf("failed to execute update command %s\nerror: %s\noutput: %s", commandAsString, err, output)
 		}
 	}
 
