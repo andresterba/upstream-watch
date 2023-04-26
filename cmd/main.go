@@ -33,6 +33,7 @@ func updateSubdirectories(loadedConfig *config.Config, db updater.Database) {
 		updateConfig, err := config.GetUpdateConfig(subdirectory + "/.update-hooks.yaml")
 		if err != nil {
 			log.Printf("Failed to update submodule %s: %+v", subdirectory, err)
+			continue
 		}
 
 		updater := updater.NewUpdater(
