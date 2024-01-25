@@ -9,6 +9,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const DATABASE_FILE_NAME = ".upstream-watch.sqlite"
+
 type Database interface {
 	AddEntry(Entry) error
 	GetEntry(Entry) (Entry, error)
@@ -35,7 +37,7 @@ func NewDatabase() Database {
 
 	// this Pings the database trying to connect
 	// use sqlx.Open() for sql.Open() semantics
-	db, err := sqlx.Connect("sqlite3", "./.upstream-watch.sqlite")
+	db, err := sqlx.Connect("sqlite3", DATABASE_FILE_NAME)
 	if err != nil {
 		log.Fatalln(err)
 	}
