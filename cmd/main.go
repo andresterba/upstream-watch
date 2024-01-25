@@ -13,8 +13,9 @@ import (
 	"github.com/andresterba/upstream-watch/internal/updater"
 )
 
-func pullUpstreamRepository() {
+func pullUpstreamRepository(runPath string) {
 	runCommand := exec.Command("git", "pull")
+	runCommand.Dir = runPath
 	output, err := runCommand.CombinedOutput()
 	if err != nil {
 		log.Fatalf("Failed to pull upstream repository\n%s\n", output)
@@ -24,7 +25,7 @@ func pullUpstreamRepository() {
 }
 
 func updateSubdirectories(runPath string, loadedConfig *config.Config, db updater.Database) {
-	pullUpstreamRepository()
+	pullUpstreamRepository(runPath)
 
 	ds := files.NewDirectoryScanner(loadedConfig.IgnoreFolders)
 	directories, err := ds.ListDirectories(runPath)
@@ -59,7 +60,7 @@ func updateSubdirectories(runPath string, loadedConfig *config.Config, db update
 }
 
 func updateRootRepository(runPath string, loadedConfig *config.Config, db updater.Database) {
-	pullUpstreamRepository()
+	pullUpstreamRepository(runPath)
 
 	subdirectory := path.Join(runPath, "/")
 	updateConfig, err := config.GetUpdateConfig(subdirectory + "/.update-hooks.yaml")
