@@ -22,10 +22,10 @@ RUN apt-get update && \
 RUN apt-get install -y git
 
 # Create a system group named "user" with the -r flag
-RUN groupadd -r user
+RUN groupadd -g 1000 -r user
 
 # Create a system user named "user" and add it to the "user" group with the -r and -g flags
-RUN useradd -r -g user user
+RUN useradd -r -u 1000 -g 1000 user
 
 WORKDIR /workdir
 
