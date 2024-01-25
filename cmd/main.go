@@ -104,7 +104,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		updateDb := updater.NewDatabase()
+		updateDb := updater.NewDatabase(runPath)
 
 		rootDirectoryeMode := loadedConfig.SingleDirectoryMode
 

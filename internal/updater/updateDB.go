@@ -3,6 +3,7 @@ package updater
 import (
 	"fmt"
 	"log"
+	"path"
 	"sync"
 
 	"github.com/jmoiron/sqlx"
@@ -33,11 +34,11 @@ const schema = `CREATE TABLE modules (
     updated boolean,
 	PRIMARY KEY (name, git_commit));`
 
-func NewDatabase() Database {
+func NewDatabase(runDir string) Database {
 
 	// this Pings the database trying to connect
 	// use sqlx.Open() for sql.Open() semantics
-	db, err := sqlx.Connect("sqlite3", DATABASE_FILE_NAME)
+	db, err := sqlx.Connect("sqlite3", path.Join(runDir, DATABASE_FILE_NAME))
 	if err != nil {
 		log.Fatalln(err)
 	}
