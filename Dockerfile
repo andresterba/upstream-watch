@@ -21,7 +21,21 @@ RUN apt-get update && \
 
 RUN apt-get install -y git
 
-WORKDIR /
+# Create a system group named "user" with the -r flag
+RUN groupadd -r user
+
+# Create a system user named "user" and add it to the "user" group with the -r and -g flags
+RUN useradd -r -g user user
+
+WORKDIR /workdir
+
+# Change the ownership of the working directory to the non-root user "user"
+
+RUN chown -R user:user /workdir
+
+# Switch to the non-root user "user"
+USER user
+
 
 COPY --from=build-stage /app/upstream-watch /app/upstream-watch
 
