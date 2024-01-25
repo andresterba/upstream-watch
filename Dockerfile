@@ -19,7 +19,10 @@ FROM debian:12-slim AS build-release-stage
 RUN apt-get update && \
     apt-get upgrade -y
 
-RUN apt-get install -y git
+RUN apt-get install -y \
+    git \
+    docker \
+    docker-compose
 
 # Create a system group named "user" with the -r flag
 RUN groupadd -g 1000 -r user
