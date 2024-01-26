@@ -31,6 +31,7 @@ RUN groupadd -g 1000 -r user
 RUN useradd -r -u 1000 -g 1000 user
 
 RUN usermod -aG docker user
+Run newgrp docker
 
 WORKDIR /workdir
 
