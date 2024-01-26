@@ -8,7 +8,7 @@ git repository.
 There are two different modes:
 
 - single directory
-- Subdiretorie per service
+- Subdirectories per service
 
 ## Single directory
 

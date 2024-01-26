@@ -22,3 +22,5 @@ testcoverage:
 	$(GOTEST) -coverprofile coverage.out ./... && go tool cover -html=coverage.out && rm coverage.out
 lint:
 	staticcheck -f stylish github.com/andresterba/upstream-watch/...
+containerize:
+	docker build -t upstream-watch:test .
