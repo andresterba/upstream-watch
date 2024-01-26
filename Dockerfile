@@ -30,6 +30,8 @@ RUN groupadd -g 1000 -r user
 # Create a system user named "user" and add it to the "user" group with the -r and -g flags
 RUN useradd -r -u 1000 -g 1000 user
 
+RUN usermod -aG docker user
+
 WORKDIR /workdir
 
 # Change the ownership of the working directory to the non-root user "user"
