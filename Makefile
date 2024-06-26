@@ -7,10 +7,13 @@ GOGET=$(GOCMD) get
 BINARY_NAME=upstream-watch
 
 all: build
+
+deps:
+	go install github.com/mfridman/tparse@latest
 build:
 	$(GOBUILD) -ldflags="-extldflags=-static" -tags sqlite_omit_load_extension -o $(BINARY_NAME) cmd/main.go
-test:
-	$(GOTEST) ./...
+test: deps
+	$(GOTEST) ./... -json | tparse -all
 clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
