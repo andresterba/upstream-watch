@@ -3,11 +3,14 @@ package updater
 import (
 	"fmt"
 	"log"
+	"path"
 	"sync"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )
+
+const DATABASE_FILE_NAME = ".upstream-watch.sqlite"
 
 type Database interface {
 	AddEntry(Entry) error
@@ -31,11 +34,11 @@ const schema = `CREATE TABLE modules (
     updated boolean,
 	PRIMARY KEY (name, git_commit));`
 
-func NewDatabase() Database {
+func NewDatabase(runDir string) Database {
 
 	// this Pings the database trying to connect
 	// use sqlx.Open() for sql.Open() semantics
-	db, err := sqlx.Connect("sqlite3", "./.upstream-watch.sqlite")
+	db, err := sqlx.Connect("sqlite3", path.Join(runDir, DATABASE_FILE_NAME))
 	if err != nil {
 		log.Fatalln(err)
 	}

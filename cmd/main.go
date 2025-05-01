@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"path"
 	"time"
 
 	"github.com/andresterba/upstream-watch/internal/config"
@@ -10,8 +13,9 @@ import (
 	"github.com/andresterba/upstream-watch/internal/updater"
 )
 
-func pullUpstreamRepository() {
+func pullUpstreamRepository(runPath string) {
 	runCommand := exec.Command("git", "pull")
+	runCommand.Dir = runPath
 	output, err := runCommand.CombinedOutput()
 	if err != nil {
 		log.Fatalf("Failed to pull upstream repository\n%s\n", output)
@@ -20,11 +24,11 @@ func pullUpstreamRepository() {
 	log.Print("Successfully pulled upstream repository")
 }
 
-func updateSubdirectories(loadedConfig *config.Config, db updater.Database) {
-	pullUpstreamRepository()
+func updateSubdirectories(runPath string, loadedConfig *config.Config, db updater.Database) {
+	pullUpstreamRepository(runPath)
 
 	ds := files.NewDirectoryScanner(loadedConfig.IgnoreFolders)
-	directories, err := ds.ListDirectories()
+	directories, err := ds.ListDirectories(runPath)
 	if err != nil {
 		log.Fatalf("failed to list directories\n%s\n", err)
 	}
@@ -55,10 +59,10 @@ func updateSubdirectories(loadedConfig *config.Config, db updater.Database) {
 	<-time.After(loadedConfig.RetryInterval * time.Second)
 }
 
-func updateRootRepository(loadedConfig *config.Config, db updater.Database) {
-	pullUpstreamRepository()
+func updateRootRepository(runPath string, loadedConfig *config.Config, db updater.Database) {
+	pullUpstreamRepository(runPath)
 
-	subdirectory := "."
+	subdirectory := path.Join(runPath, "/")
 	updateConfig, err := config.GetUpdateConfig(subdirectory + "/.update-hooks.yaml")
 	if err != nil {
 		log.Printf("Failed to update root: %+v", err)
@@ -81,23 +85,35 @@ func updateRootRepository(loadedConfig *config.Config, db updater.Database) {
 	<-time.After(loadedConfig.RetryInterval * time.Second)
 }
 
+const configName = ".upstream-watch.yaml"
+
 func main() {
+	args := os.Args
+	if len(args) != 2 {
+		fmt.Printf("Please provide specify the directory to run in as arg.\n")
+		os.Exit(0)
+	}
+
+	runPath := os.Args[1]
+
+	pathToConfig := path.Join(runPath, configName)
+
 	for {
-		loadedConfig, err := config.GetConfig(".upstream-watch.yaml")
+		loadedConfig, err := config.GetConfig(pathToConfig)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		updateDb := updater.NewDatabase()
+		updateDb := updater.NewDatabase(runPath)
 
 		rootDirectoryeMode := loadedConfig.SingleDirectoryMode
 
 		switch rootDirectoryeMode {
 		case true:
-			updateRootRepository(loadedConfig, updateDb)
+			updateRootRepository(runPath, loadedConfig, updateDb)
 
 		case false:
-			updateSubdirectories(loadedConfig, updateDb)
+			updateSubdirectories(runPath, loadedConfig, updateDb)
 		}
 	}
 }

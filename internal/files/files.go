@@ -23,9 +23,9 @@ func NewDirectoryScanner(directoriesToIgnore []string) *DirectoryScanner {
 	}
 }
 
-func (ds *DirectoryScanner) ListDirectories() ([]string, error) {
+func (ds *DirectoryScanner) ListDirectories(runPath string) ([]string, error) {
 	subdirectories := []string{}
-	entries, err := os.ReadDir(".")
+	entries, err := os.ReadDir(runPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list directories %v", err)
 	}

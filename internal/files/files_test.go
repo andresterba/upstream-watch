@@ -74,7 +74,7 @@ func TestDirectoryScanner_ListDirectories(t *testing.T) {
 			ds := &DirectoryScanner{
 				directoriesToIgnore: tt.fields.directoriesToIgnore,
 			}
-			got, err := ds.ListDirectories()
+			got, err := ds.ListDirectories(".")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DirectoryScanner.ListDirectories() error = %v, wantErr %v", err, tt.wantErr)
 				return
