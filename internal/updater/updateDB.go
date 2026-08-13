@@ -21,16 +21,23 @@ type database struct {
 }
 
 type Entry struct {
+	ID         int64  `db:"id"`
 	ModuleName string `db:"name"`
 	Commit     string `db:"git_commit"`
 	Updated    bool   `db:"updated"`
 }
 
+// id is an explicit, self-documenting monotonically increasing column used
+// to order entries by recency (see GetLatestUpdatedEntry). It intentionally
+// does not rely on SQLite's implicit rowid, since that's a driver/engine
+// implementation detail rather than a guarantee we want this query to lean
+// on.
 const schema = `CREATE TABLE modules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name text,
     git_commit text NULL,
     updated boolean,
-	PRIMARY KEY (name, git_commit));`
+	UNIQUE (name, git_commit));`
 
 func NewDatabase() Database {
 
@@ -96,7 +103,7 @@ func (d *database) GetEntry(e Entry) (Entry, error) {
 // sql.ErrNoRows if the module has never been successfully updated before.
 func (d *database) GetLatestUpdatedEntry(moduleName string) (Entry, error) {
 	entry := Entry{}
-	err := d.db.Get(&entry, "SELECT * FROM modules WHERE name=$1 AND updated=true ORDER BY rowid DESC LIMIT 1", moduleName)
+	err := d.db.Get(&entry, "SELECT * FROM modules WHERE name=$1 AND updated=true ORDER BY id DESC LIMIT 1", moduleName)
 	if err != nil {
 		return entry, err
 	}
