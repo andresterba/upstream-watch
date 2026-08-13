@@ -1,6 +1,8 @@
 package updater
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os/exec"
@@ -69,19 +71,35 @@ func (u *Updater) Update() error {
 	return nil
 }
 
+// isUpdateNecessary reports whether the module changed since the last commit
+// it was successfully updated for. It diffs against that recorded baseline
+// commit rather than assuming a `git pull` only ever brings in a single new
+// commit (HEAD~1), which would silently miss changes further back whenever
+// multiple commits are pulled at once.
 func (u *Updater) isUpdateNecessary() (bool, error) {
-	directoryChanged := false
-	runCommand := exec.Command("git", "diff", "--quiet", "HEAD", "HEAD~1", "--", u.moduleName)
-	output, err := runCommand.CombinedOutput()
+	baselineEntry, err := u.db.GetLatestUpdatedEntry(u.moduleName)
 	if err != nil {
-		if err.Error() == "exit status 1" {
-			directoryChanged = true
-		} else {
-			return false, fmt.Errorf("failed to determine if update is necessary %s\n output: %s", err, output)
+		if errors.Is(err, sql.ErrNoRows) {
+			// never successfully updated before, so there is nothing to
+			// diff against; treat this as an initial update.
+			return true, nil
 		}
+
+		return false, fmt.Errorf("failed to determine if update is necessary %w", err)
 	}
 
-	return directoryChanged && !u.dbEntry.Updated, nil
+	runCommand := exec.Command("git", "diff", "--quiet", baselineEntry.Commit, "HEAD", "--", u.moduleName)
+	output, err := runCommand.CombinedOutput()
+	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+			return true, nil
+		}
+
+		return false, fmt.Errorf("failed to determine if update is necessary %s\n output: %s", err, output)
+	}
+
+	return false, nil
 }
 
 func (u *Updater) executePreHooks() error {
@@ -140,7 +158,7 @@ func (u *Updater) getCurrentCommitHash() (string, error) {
 		return string(output), err
 	}
 
-	return string(output), nil
+	return strings.TrimSpace(string(output)), nil
 }
 
 func (u *Updater) getEntryForModule() (*Entry, error) {

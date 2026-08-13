@@ -128,3 +128,48 @@ func Test_database_GetEntry(t *testing.T) {
 		})
 	}
 }
+
+// TestVerifyModulesSchema checks that a modules table predating the id
+// column is correctly flagged as incompatible, without upstream-watch
+// trying to migrate it.
+func TestVerifyModulesSchema(t *testing.T) {
+	tests := []struct {
+		name        string
+		createTable string
+		wantErr     bool
+	}{
+		{
+			name:        "current schema is compatible",
+			createTable: schema,
+			wantErr:     false,
+		},
+		{
+			name: "schema predating the id column is incompatible",
+			createTable: `CREATE TABLE modules (
+				name text,
+				git_commit text NULL,
+				updated boolean,
+				PRIMARY KEY (name, git_commit));`,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db, err := sqlx.Connect("sqlite3", ":memory:")
+			if err != nil {
+				t.Fatalf("failed to open in-memory db: %v", err)
+			}
+			defer db.Close()
+
+			if _, err := db.Exec(tt.createTable); err != nil {
+				t.Fatalf("failed to create table: %v", err)
+			}
+
+			err = verifyModulesSchema(db)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("verifyModulesSchema() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
