@@ -61,7 +61,7 @@ func (u *Updater) Update() error {
 		return err
 	}
 
-	u.persistExecutedUpdateInDB()
+	err = u.persistExecutedUpdateInDB()
 	if err != nil {
 		return err
 	}
