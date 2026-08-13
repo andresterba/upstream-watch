@@ -66,6 +66,8 @@ func updateRootRepository(runPath string, loadedConfig *config.Config, db update
 	updateConfig, err := config.GetUpdateConfig(subdirectory + "/.update-hooks.yaml")
 	if err != nil {
 		log.Printf("Failed to update root: %+v", err)
+		<-time.After(loadedConfig.RetryInterval * time.Second)
+		return
 	}
 
 	updater := updater.NewUpdater(
@@ -98,21 +100,17 @@ func main() {
 
 	pathToConfig := path.Join(runPath, configName)
 
+	updateDb := updater.NewDatabase(runPath)
+
 	for {
 		loadedConfig, err := config.GetConfig(pathToConfig)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		updateDb := updater.NewDatabase(runPath)
-
-		rootDirectoryeMode := loadedConfig.SingleDirectoryMode
-
-		switch rootDirectoryeMode {
-		case true:
+		if loadedConfig.SingleDirectoryMode {
 			updateRootRepository(runPath, loadedConfig, updateDb)
-
-		case false:
+		} else {
 			updateSubdirectories(runPath, loadedConfig, updateDb)
 		}
 	}

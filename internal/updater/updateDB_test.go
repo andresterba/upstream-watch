@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"sync"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -64,8 +63,7 @@ func Test_database_AddEntry(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newMock()
 			d := &database{
-				db:    db,
-				mutex: &sync.Mutex{},
+				db: db,
 			}
 			tt.mockClosure(mock)
 			if err := d.AddEntry(*tt.args.e); (err != nil) != tt.wantErr {
@@ -108,8 +106,7 @@ func Test_database_GetEntry(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newMock()
 			d := &database{
-				db:    db,
-				mutex: &sync.Mutex{},
+				db: db,
 			}
 			tt.mockClosure(mock)
 
@@ -124,6 +121,51 @@ func Test_database_GetEntry(t *testing.T) {
 
 			if err := mock.ExpectationsWereMet(); err != nil {
 				t.Errorf("there were unfulfilled expectations: %s", err)
+			}
+		})
+	}
+}
+
+// TestVerifyModulesSchema checks that a modules table predating the id
+// column is correctly flagged as incompatible, without upstream-watch
+// trying to migrate it.
+func TestVerifyModulesSchema(t *testing.T) {
+	tests := []struct {
+		name        string
+		createTable string
+		wantErr     bool
+	}{
+		{
+			name:        "current schema is compatible",
+			createTable: schema,
+			wantErr:     false,
+		},
+		{
+			name: "schema predating the id column is incompatible",
+			createTable: `CREATE TABLE modules (
+				name text,
+				git_commit text NULL,
+				updated boolean,
+				PRIMARY KEY (name, git_commit));`,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db, err := sqlx.Connect("sqlite3", ":memory:")
+			if err != nil {
+				t.Fatalf("failed to open in-memory db: %v", err)
+			}
+			defer db.Close()
+
+			if _, err := db.Exec(tt.createTable); err != nil {
+				t.Fatalf("failed to create table: %v", err)
+			}
+
+			err = verifyModulesSchema(db)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("verifyModulesSchema() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

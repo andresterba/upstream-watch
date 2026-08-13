@@ -10,12 +10,9 @@ type DirectoryScanner struct {
 }
 
 func NewDirectoryScanner(directoriesToIgnore []string) *DirectoryScanner {
-	directoriesToIgnoreLookupMap := make(map[string]struct{})
+	directoriesToIgnoreLookupMap := make(map[string]struct{}, len(directoriesToIgnore))
 	for _, dir := range directoriesToIgnore {
-		_, ok := directoriesToIgnoreLookupMap[dir]
-		if !ok {
-			directoriesToIgnoreLookupMap[dir] = struct{}{}
-		}
+		directoriesToIgnoreLookupMap[dir] = struct{}{}
 	}
 
 	return &DirectoryScanner{
