@@ -62,6 +62,8 @@ func updateRootRepository(loadedConfig *config.Config, db updater.Database) {
 	updateConfig, err := config.GetUpdateConfig(subdirectory + "/.update-hooks.yaml")
 	if err != nil {
 		log.Printf("Failed to update root: %+v", err)
+		<-time.After(loadedConfig.RetryInterval * time.Second)
+		return
 	}
 
 	updater := updater.NewUpdater(
@@ -82,13 +84,13 @@ func updateRootRepository(loadedConfig *config.Config, db updater.Database) {
 }
 
 func main() {
+	updateDb := updater.NewDatabase()
+
 	for {
 		loadedConfig, err := config.GetConfig(".upstream-watch.yaml")
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		updateDb := updater.NewDatabase()
 
 		rootDirectoryeMode := loadedConfig.SingleDirectoryMode
 
