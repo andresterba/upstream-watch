@@ -12,6 +12,7 @@ import (
 type Database interface {
 	AddEntry(Entry) error
 	GetEntry(Entry) (Entry, error)
+	GetLatestUpdatedEntry(moduleName string) (Entry, error)
 }
 
 type database struct {
@@ -83,6 +84,19 @@ func (d *database) AddEntry(e Entry) error {
 func (d *database) GetEntry(e Entry) (Entry, error) {
 	entry := Entry{}
 	err := d.db.Get(&entry, "SELECT * FROM modules WHERE name=$1 AND git_commit=$2", e.ModuleName, e.Commit)
+	if err != nil {
+		return entry, err
+	}
+
+	return entry, nil
+}
+
+// GetLatestUpdatedEntry returns the most recently recorded successful update
+// for moduleName, i.e. the commit that was last applied. It returns
+// sql.ErrNoRows if the module has never been successfully updated before.
+func (d *database) GetLatestUpdatedEntry(moduleName string) (Entry, error) {
+	entry := Entry{}
+	err := d.db.Get(&entry, "SELECT * FROM modules WHERE name=$1 AND updated=true ORDER BY rowid DESC LIMIT 1", moduleName)
 	if err != nil {
 		return entry, err
 	}
