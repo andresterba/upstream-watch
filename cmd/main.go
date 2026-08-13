@@ -92,13 +92,9 @@ func main() {
 			log.Fatal(err)
 		}
 
-		rootDirectoryeMode := loadedConfig.SingleDirectoryMode
-
-		switch rootDirectoryeMode {
-		case true:
+		if loadedConfig.SingleDirectoryMode {
 			updateRootRepository(loadedConfig, updateDb)
-
-		case false:
+		} else {
 			updateSubdirectories(loadedConfig, updateDb)
 		}
 	}

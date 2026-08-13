@@ -22,7 +22,7 @@ func TestGetUpdateConfig(t *testing.T) {
 			},
 			want: &UpdateConfig{
 				PreUpdateCommands:  []string{"docker compose down"},
-				UpdateCommands: []string{"docker compose pull"},
+				UpdateCommands:     []string{"docker compose pull"},
 				PostUpdateCommands: []string{"docker compose up"},
 			},
 			wantErr: false,
