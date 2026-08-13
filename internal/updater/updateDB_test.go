@@ -3,6 +3,7 @@ package updater
 import (
 	"fmt"
 	"log"
+	"os"
 	"reflect"
 	"sync"
 	"testing"
@@ -126,5 +127,84 @@ func Test_database_GetEntry(t *testing.T) {
 				t.Errorf("there were unfulfilled expectations: %s", err)
 			}
 		})
+	}
+}
+
+// TestNewDatabase_MigratesLegacySchema verifies that a modules table created
+// by a pre-migration version of upstream-watch (no id column, PRIMARY KEY
+// (name, git_commit)) is upgraded in place: existing rows survive, and are
+// assigned ids in their original insertion order so GetLatestUpdatedEntry
+// keeps meaning "most recent" across the upgrade.
+func TestNewDatabase_MigratesLegacySchema(t *testing.T) {
+	dir := t.TempDir()
+
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get working directory: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("failed to chdir into temp dir: %v", err)
+	}
+	defer os.Chdir(orig)
+
+	legacyDB, err := sqlx.Connect("sqlite3", "./.upstream-watch.sqlite")
+	if err != nil {
+		t.Fatalf("failed to open legacy db: %v", err)
+	}
+	if _, err := legacyDB.Exec(`CREATE TABLE modules (
+		name text,
+		git_commit text NULL,
+		updated boolean,
+		PRIMARY KEY (name, git_commit));`); err != nil {
+		t.Fatalf("failed to create legacy schema: %v", err)
+	}
+	if _, err := legacyDB.Exec(`INSERT INTO modules (name, git_commit, updated) VALUES
+		('svc', 'commit-a', 1),
+		('svc', 'commit-b', 1),
+		('other', 'commit-x', 1)`); err != nil {
+		t.Fatalf("failed to seed legacy rows: %v", err)
+	}
+	if err := legacyDB.Close(); err != nil {
+		t.Fatalf("failed to close legacy db: %v", err)
+	}
+
+	db := NewDatabase()
+
+	got, err := db.GetEntry(Entry{ModuleName: "svc", Commit: "commit-a"})
+	if err != nil {
+		t.Fatalf("expected legacy row to survive migration: %v", err)
+	}
+	if !got.Updated {
+		t.Errorf("expected migrated row to keep Updated=true, got %+v", got)
+	}
+
+	latest, err := db.GetLatestUpdatedEntry("svc")
+	if err != nil {
+		t.Fatalf("GetLatestUpdatedEntry failed after migration: %v", err)
+	}
+	if latest.Commit != "commit-b" {
+		t.Errorf("expected latest entry to be commit-b (inserted last), got %q", latest.Commit)
+	}
+
+	// re-opening (and thus re-running the migration check) must be stable
+	db2 := NewDatabase()
+	latest2, err := db2.GetLatestUpdatedEntry("svc")
+	if err != nil {
+		t.Fatalf("GetLatestUpdatedEntry failed on re-open: %v", err)
+	}
+	if latest2.Commit != "commit-b" {
+		t.Errorf("expected latest entry to remain commit-b on re-open, got %q", latest2.Commit)
+	}
+
+	if err := db2.AddEntry(Entry{ModuleName: "svc", Commit: "commit-c", Updated: true}); err != nil {
+		t.Fatalf("AddEntry after migration failed: %v", err)
+	}
+
+	latest3, err := db2.GetLatestUpdatedEntry("svc")
+	if err != nil {
+		t.Fatalf("GetLatestUpdatedEntry failed after post-migration insert: %v", err)
+	}
+	if latest3.Commit != "commit-c" {
+		t.Errorf("expected commit-c to be latest after insert, got %q", latest3.Commit)
 	}
 }

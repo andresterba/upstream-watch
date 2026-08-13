@@ -59,12 +59,85 @@ func NewDatabase() Database {
 		if !(err.Error() == "table modules already exists") {
 			log.Fatalln(err)
 		}
+
+		if err := migrateModulesTableToIDColumn(db); err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	return &database{
 		db:    db,
 		mutex: &sync.Mutex{},
 	}
+}
+
+// migrateModulesTableToIDColumn upgrades a modules table created by a
+// version of upstream-watch that predates the explicit id column (i.e. one
+// keyed only by PRIMARY KEY (name, git_commit)). It is a no-op if the table
+// already has an id column. Existing rows are preserved, and are given ids
+// in their original insertion order so GetLatestUpdatedEntry's ordering
+// keeps meaning "most recent" across the upgrade.
+func migrateModulesTableToIDColumn(db *sqlx.DB) error {
+	hasIDColumn, err := modulesTableHasIDColumn(db)
+	if err != nil {
+		return fmt.Errorf("failed to inspect modules table: %w", err)
+	}
+
+	if hasIDColumn {
+		return nil
+	}
+
+	log.Println("migrating modules table to add an explicit id column")
+
+	tx := db.MustBegin()
+	defer tx.Rollback()
+
+	if _, err := tx.Exec("ALTER TABLE modules RENAME TO modules_pre_id_migration"); err != nil {
+		return fmt.Errorf("failed to rename old modules table: %w", err)
+	}
+
+	if _, err := tx.Exec(schema); err != nil {
+		return fmt.Errorf("failed to create new modules table: %w", err)
+	}
+
+	if _, err := tx.Exec(`INSERT INTO modules (name, git_commit, updated)
+		SELECT name, git_commit, updated FROM modules_pre_id_migration ORDER BY rowid`); err != nil {
+		return fmt.Errorf("failed to copy rows into migrated modules table: %w", err)
+	}
+
+	if _, err := tx.Exec("DROP TABLE modules_pre_id_migration"); err != nil {
+		return fmt.Errorf("failed to drop pre-migration modules table: %w", err)
+	}
+
+	return tx.Commit()
+}
+
+func modulesTableHasIDColumn(db *sqlx.DB) (bool, error) {
+	rows, err := db.Query("PRAGMA table_info(modules)")
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			cid       int
+			name      string
+			ctype     string
+			notNull   int
+			dfltValue any
+			pk        int
+		)
+		if err := rows.Scan(&cid, &name, &ctype, &notNull, &dfltValue, &pk); err != nil {
+			return false, err
+		}
+
+		if name == "id" {
+			return true, nil
+		}
+	}
+
+	return false, rows.Err()
 }
 
 func (d *database) AddEntry(e Entry) error {
