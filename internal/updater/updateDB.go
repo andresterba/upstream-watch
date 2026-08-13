@@ -17,7 +17,7 @@ type Database interface {
 
 type database struct {
 	db    *sqlx.DB
-	mutex *sync.Mutex
+	mutex sync.Mutex
 }
 
 type Entry struct {
@@ -73,8 +73,7 @@ func NewDatabase() Database {
 	}
 
 	return &database{
-		db:    db,
-		mutex: &sync.Mutex{},
+		db: db,
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"sync"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -64,8 +63,7 @@ func Test_database_AddEntry(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newMock()
 			d := &database{
-				db:    db,
-				mutex: &sync.Mutex{},
+				db: db,
 			}
 			tt.mockClosure(mock)
 			if err := d.AddEntry(*tt.args.e); (err != nil) != tt.wantErr {
@@ -108,8 +106,7 @@ func Test_database_GetEntry(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newMock()
 			d := &database{
-				db:    db,
-				mutex: &sync.Mutex{},
+				db: db,
 			}
 			tt.mockClosure(mock)
 
