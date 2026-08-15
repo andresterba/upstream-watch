@@ -9,6 +9,11 @@ import (
 	"strings"
 )
 
+// ErrNoUpdateNecessary indicates that the module is already up to date and
+// no update commands were run. Callers should treat this as a normal
+// no-op outcome rather than a failure.
+var ErrNoUpdateNecessary = errors.New("no update necessary")
+
 type Updater struct {
 	moduleName     string
 	preHooks       []string
@@ -44,7 +49,7 @@ func (u *Updater) Update() error {
 	}
 
 	if !updateNecessary {
-		return fmt.Errorf("no update for %s necessary", u.moduleName)
+		return fmt.Errorf("%s: %w", u.moduleName, ErrNoUpdateNecessary)
 	}
 
 	log.Printf("starting update of module %s\n", u.moduleName)

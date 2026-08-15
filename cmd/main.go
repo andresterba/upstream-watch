@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -41,7 +42,7 @@ func updateSubdirectories(runPath string, loadedConfig *config.Config, db update
 			continue
 		}
 
-		updater, err := updater.NewUpdater(
+		moduleUpdater, err := updater.NewUpdater(
 			subdirectoryPath,
 			updateConfig.PreUpdateCommands,
 			updateConfig.UpdateCommands,
@@ -53,8 +54,13 @@ func updateSubdirectories(runPath string, loadedConfig *config.Config, db update
 			continue
 		}
 
-		err = updater.Update()
+		err = moduleUpdater.Update()
 		if err != nil {
+			if errors.Is(err, updater.ErrNoUpdateNecessary) {
+				log.Printf("No update needed for submodule %s", subdirectory)
+				continue
+			}
+
 			log.Printf("Failed to update submodule %s: %+v", subdirectory, err)
 			continue
 		}
@@ -76,7 +82,7 @@ func updateRootRepository(runPath string, loadedConfig *config.Config, db update
 		return
 	}
 
-	updater, err := updater.NewUpdater(
+	moduleUpdater, err := updater.NewUpdater(
 		subdirectory,
 		updateConfig.PreUpdateCommands,
 		updateConfig.UpdateCommands,
@@ -89,9 +95,13 @@ func updateRootRepository(runPath string, loadedConfig *config.Config, db update
 		return
 	}
 
-	err = updater.Update()
+	err = moduleUpdater.Update()
 	if err != nil {
-		log.Printf("Failed to update root: %+v", err)
+		if errors.Is(err, updater.ErrNoUpdateNecessary) {
+			log.Printf("No update needed for root")
+		} else {
+			log.Printf("Failed to update root: %+v", err)
+		}
 	} else {
 		log.Printf("Successfully updated root")
 	}
