@@ -1,12 +1,12 @@
 package updater
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"sync"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type Database interface {
@@ -16,15 +16,15 @@ type Database interface {
 }
 
 type database struct {
-	db    *sqlx.DB
+	db    *sql.DB
 	mutex sync.Mutex
 }
 
 type Entry struct {
-	ID         int64  `db:"id"`
-	ModuleName string `db:"name"`
-	Commit     string `db:"git_commit"`
-	Updated    bool   `db:"updated"`
+	ID         int64
+	ModuleName string
+	Commit     string
+	Updated    bool
 }
 
 // id is an explicit, self-documenting monotonically increasing column used
@@ -42,10 +42,7 @@ const schema = `CREATE TABLE modules (
 	UNIQUE (name, git_commit));`
 
 func NewDatabase() Database {
-
-	// this Pings the database trying to connect
-	// use sqlx.Open() for sql.Open() semantics
-	db, err := sqlx.Connect("sqlite3", dbPath)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -79,7 +76,7 @@ func NewDatabase() Database {
 
 // verifyModulesSchema checks that an existing modules table matches the
 // columns this version of upstream-watch expects.
-func verifyModulesSchema(db *sqlx.DB) error {
+func verifyModulesSchema(db *sql.DB) error {
 	_, err := db.Exec("SELECT id, name, git_commit, updated FROM modules LIMIT 1")
 	return err
 }
@@ -88,10 +85,14 @@ func (d *database) AddEntry(e Entry) error {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 
-	tx := d.db.MustBegin()
-	_, err := tx.NamedExec(
-		"INSERT INTO modules (name, git_commit, updated) VALUES (:name, :git_commit, :updated)",
-		e,
+	tx, err := d.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction %v", err)
+	}
+
+	_, err = tx.Exec(
+		"INSERT INTO modules (name, git_commit, updated) VALUES (?, ?, ?)",
+		e.ModuleName, e.Commit, e.Updated,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert new entry %v", err)
@@ -107,7 +108,11 @@ func (d *database) AddEntry(e Entry) error {
 
 func (d *database) GetEntry(e Entry) (Entry, error) {
 	entry := Entry{}
-	err := d.db.Get(&entry, "SELECT * FROM modules WHERE name=$1 AND git_commit=$2", e.ModuleName, e.Commit)
+	row := d.db.QueryRow(
+		"SELECT id, name, git_commit, updated FROM modules WHERE name = ? AND git_commit = ?",
+		e.ModuleName, e.Commit,
+	)
+	err := row.Scan(&entry.ID, &entry.ModuleName, &entry.Commit, &entry.Updated)
 	if err != nil {
 		return entry, err
 	}
@@ -120,7 +125,11 @@ func (d *database) GetEntry(e Entry) (Entry, error) {
 // sql.ErrNoRows if the module has never been successfully updated before.
 func (d *database) GetLatestUpdatedEntry(moduleName string) (Entry, error) {
 	entry := Entry{}
-	err := d.db.Get(&entry, "SELECT * FROM modules WHERE name=$1 AND updated=true ORDER BY id DESC LIMIT 1", moduleName)
+	row := d.db.QueryRow(
+		"SELECT id, name, git_commit, updated FROM modules WHERE name = ? AND updated = true ORDER BY id DESC LIMIT 1",
+		moduleName,
+	)
+	err := row.Scan(&entry.ID, &entry.ModuleName, &entry.Commit, &entry.Updated)
 	if err != nil {
 		return entry, err
 	}

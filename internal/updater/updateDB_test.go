@@ -1,24 +1,23 @@
 package updater
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"reflect"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
-func newMock() (*sqlx.DB, sqlmock.Sqlmock) {
+func newMock() (*sql.DB, sqlmock.Sqlmock) {
 	mockDB, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	sqlxDB := sqlx.NewDb(mockDB, "sqlmock")
 	if err != nil {
 		log.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
 
-	return sqlxDB, mock
+	return mockDB, mock
 }
 
 func Test_database_AddEntry(t *testing.T) {
@@ -94,11 +93,13 @@ func Test_database_GetEntry(t *testing.T) {
 				e: Entry{ModuleName: "test", Commit: "testabcdef", Updated: true},
 			},
 			mockClosure: func(mock sqlmock.Sqlmock) {
-				rows := sqlmock.NewRows([]string{"name", "git_commit", "updated"}).
-					AddRow("test", "testabcdef", true)
-				mock.ExpectQuery("SELECT * FROM modules WHERE name=$1 AND git_commit=$2").WithArgs("test", "testabcdef").WillReturnRows(rows)
+				rows := sqlmock.NewRows([]string{"id", "name", "git_commit", "updated"}).
+					AddRow(1, "test", "testabcdef", true)
+				mock.ExpectQuery("SELECT id, name, git_commit, updated FROM modules WHERE name = ? AND git_commit = ?").
+					WithArgs("test", "testabcdef").
+					WillReturnRows(rows)
 			},
-			want:    Entry{ModuleName: "test", Commit: "testabcdef", Updated: true},
+			want:    Entry{ID: 1, ModuleName: "test", Commit: "testabcdef", Updated: true},
 			wantErr: false,
 		},
 	}
@@ -153,7 +154,7 @@ func TestVerifyModulesSchema(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, err := sqlx.Connect("sqlite3", ":memory:")
+			db, err := sql.Open("sqlite", ":memory:")
 			if err != nil {
 				t.Fatalf("failed to open in-memory db: %v", err)
 			}
