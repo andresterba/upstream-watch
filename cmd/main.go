@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"path"
 	"time"
 
 	"github.com/andresterba/upstream-watch/internal/config"
@@ -10,8 +13,9 @@ import (
 	"github.com/andresterba/upstream-watch/internal/updater"
 )
 
-func pullUpstreamRepository() {
+func pullUpstreamRepository(runPath string) {
 	runCommand := exec.Command("git", "pull")
+	runCommand.Dir = runPath
 	output, err := runCommand.CombinedOutput()
 	if err != nil {
 		log.Fatalf("Failed to pull upstream repository\n%s\n", output)
@@ -20,24 +24,25 @@ func pullUpstreamRepository() {
 	log.Print("Successfully pulled upstream repository")
 }
 
-func updateSubdirectories(loadedConfig *config.Config, db updater.Database) {
-	pullUpstreamRepository()
+func updateSubdirectories(runPath string, loadedConfig *config.Config, db updater.Database) {
+	pullUpstreamRepository(runPath)
 
 	ds := files.NewDirectoryScanner(loadedConfig.IgnoreFolders)
-	directories, err := ds.ListDirectories()
+	directories, err := ds.ListDirectories(runPath)
 	if err != nil {
 		log.Fatalf("failed to list directories\n%s\n", err)
 	}
 
 	for _, subdirectory := range directories {
-		updateConfig, err := config.GetUpdateConfig(subdirectory + "/.update-hooks.yaml")
+		subdirectoryPath := path.Join(runPath, subdirectory)
+		updateConfig, err := config.GetUpdateConfig(subdirectoryPath + "/.update-hooks.yaml")
 		if err != nil {
 			log.Printf("Failed to update submodule %s: %+v", subdirectory, err)
 			continue
 		}
 
 		updater := updater.NewUpdater(
-			subdirectory,
+			subdirectoryPath,
 			updateConfig.PreUpdateCommands,
 			updateConfig.UpdateCommands,
 			updateConfig.PostUpdateCommands,
@@ -55,10 +60,10 @@ func updateSubdirectories(loadedConfig *config.Config, db updater.Database) {
 	<-time.After(loadedConfig.RetryInterval * time.Second)
 }
 
-func updateRootRepository(loadedConfig *config.Config, db updater.Database) {
-	pullUpstreamRepository()
+func updateRootRepository(runPath string, loadedConfig *config.Config, db updater.Database) {
+	pullUpstreamRepository(runPath)
 
-	subdirectory := "."
+	subdirectory := path.Join(runPath, "/")
 	updateConfig, err := config.GetUpdateConfig(subdirectory + "/.update-hooks.yaml")
 	if err != nil {
 		log.Printf("Failed to update root: %+v", err)
@@ -83,19 +88,31 @@ func updateRootRepository(loadedConfig *config.Config, db updater.Database) {
 	<-time.After(loadedConfig.RetryInterval * time.Second)
 }
 
+const configName = ".upstream-watch.yaml"
+
 func main() {
-	updateDb := updater.NewDatabase()
+	args := os.Args
+	if len(args) != 2 {
+		fmt.Printf("Please provide specify the directory to run in as arg.\n")
+		os.Exit(0)
+	}
+
+	runPath := os.Args[1]
+
+	pathToConfig := path.Join(runPath, configName)
+
+	updateDb := updater.NewDatabase(runPath)
 
 	for {
-		loadedConfig, err := config.GetConfig(".upstream-watch.yaml")
+		loadedConfig, err := config.GetConfig(pathToConfig)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		if loadedConfig.SingleDirectoryMode {
-			updateRootRepository(loadedConfig, updateDb)
+			updateRootRepository(runPath, loadedConfig, updateDb)
 		} else {
-			updateSubdirectories(loadedConfig, updateDb)
+			updateSubdirectories(runPath, loadedConfig, updateDb)
 		}
 	}
 }

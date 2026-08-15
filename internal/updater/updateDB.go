@@ -4,10 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"path"
 	"sync"
 
 	_ "modernc.org/sqlite"
 )
+
+const DATABASE_FILE_NAME = ".upstream-watch.sqlite"
 
 type Database interface {
 	AddEntry(Entry) error
@@ -27,13 +30,6 @@ type Entry struct {
 	Updated    bool
 }
 
-// id is an explicit, self-documenting monotonically increasing column used
-// to order entries by recency (see GetLatestUpdatedEntry). It intentionally
-// does not rely on SQLite's implicit rowid, since that's a driver/engine
-// implementation detail rather than a guarantee we want this query to lean
-// on.
-const dbPath = "./.upstream-watch.sqlite"
-
 const schema = `CREATE TABLE modules (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name text,
@@ -41,7 +37,9 @@ const schema = `CREATE TABLE modules (
     updated boolean,
 	UNIQUE (name, git_commit));`
 
-func NewDatabase() Database {
+func NewDatabase(runDir string) Database {
+	dbPath := path.Join(runDir, DATABASE_FILE_NAME)
+
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		log.Fatalln(err)
