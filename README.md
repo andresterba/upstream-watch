@@ -84,7 +84,7 @@ The image (`ghcr.io/andresterba/upstream-watch`)
 bundles `git` and a `docker`/`docker compose` CLI, and starts as root just long enough to grant its non-root
 user access to the bind-mounted `/var/run/docker.sock`, then drops privileges before running `upstream-watch`.
 
-Two things matter for a working setup:
+The following things matter for a working setup:
 
 - Mount `/var/run/docker.sock` so the container can talk to the host's Docker daemon.
 - Mount your repository at the **same absolute path** inside the container as it has on the host, and pass
@@ -94,6 +94,18 @@ Two things matter for a working setup:
   only resolve correctly if the path the container sees matches the path the host daemon sees. Using the
   default `/workdir` for both host and container path also works, but only because it happens to match on
   both sides — the important thing is that container path == host path, not the specific name.
+- Mount your SSH keys and `known_hosts` **read-only** at `/home/user/.ssh`, since `upstream-watch` (and its
+  bundled `git`) runs as the non-root `user` account, whose home is `/home/user`. `git pull` needs both a
+  private key that's allowed to read the upstream repository and a `known_hosts` entry for the upstream
+  host — without the latter you'll get `Host key verification failed.` and the pull (and the container,
+  since a failed pull is currently fatal) will keep failing. Mount your existing `~/.ssh` directory, or a
+  purpose-built one containing just a deploy key and `known_hosts`. Keep the private key file itself
+  `chmod 600` on the host; a read-only bind mount doesn't relax the permission check `ssh` does on it.
+- If any `update_commands`/`pre_update_commands`/`post_update_commands` pull images from a private
+  registry (e.g. `docker compose pull`), also mount your Docker client config **read-only** at
+  `/home/user/.docker`. Registry credentials from `docker login` live client-side in
+  `~/.docker/config.json`, so even though the actual pull is performed by the host's Docker daemon, the
+  container's `docker` CLI still needs that config to authenticate the request.
 
 ```yaml
 services:
@@ -103,5 +115,7 @@ services:
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - /home/deploy/services:/home/deploy/services
+            - /home/deploy/.ssh:/home/user/.ssh:ro
+            - /home/deploy/.docker:/home/user/.docker:ro
         command: ["/home/deploy/services"]
 ```
