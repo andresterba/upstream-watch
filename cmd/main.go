@@ -41,13 +41,18 @@ func updateSubdirectories(runPath string, loadedConfig *config.Config, db update
 			continue
 		}
 
-		updater := updater.NewUpdater(
+		updater, err := updater.NewUpdater(
 			subdirectoryPath,
 			updateConfig.PreUpdateCommands,
 			updateConfig.UpdateCommands,
 			updateConfig.PostUpdateCommands,
 			db,
 		)
+		if err != nil {
+			log.Printf("Failed to update submodule %s: %+v", subdirectory, err)
+			continue
+		}
+
 		err = updater.Update()
 		if err != nil {
 			log.Printf("Failed to update submodule %s: %+v", subdirectory, err)
@@ -71,13 +76,19 @@ func updateRootRepository(runPath string, loadedConfig *config.Config, db update
 		return
 	}
 
-	updater := updater.NewUpdater(
+	updater, err := updater.NewUpdater(
 		subdirectory,
 		updateConfig.PreUpdateCommands,
 		updateConfig.UpdateCommands,
 		updateConfig.PostUpdateCommands,
 		db,
 	)
+	if err != nil {
+		log.Printf("Failed to update root: %+v", err)
+		<-time.After(loadedConfig.RetryInterval * time.Second)
+		return
+	}
+
 	err = updater.Update()
 	if err != nil {
 		log.Printf("Failed to update root: %+v", err)
