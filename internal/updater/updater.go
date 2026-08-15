@@ -18,7 +18,7 @@ type Updater struct {
 	dbEntry        Entry
 }
 
-func NewUpdater(path string, preHooks []string, updateCommands []string, postHooks []string, db Database) *Updater {
+func NewUpdater(path string, preHooks []string, updateCommands []string, postHooks []string, db Database) (*Updater, error) {
 	u := &Updater{
 		moduleName:     path,
 		preHooks:       preHooks,
@@ -29,12 +29,12 @@ func NewUpdater(path string, preHooks []string, updateCommands []string, postHoo
 
 	entry, err := u.getEntryForModule()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	u.dbEntry = *entry
 
-	return u
+	return u, nil
 }
 
 func (u *Updater) Update() error {
