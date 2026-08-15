@@ -8,7 +8,7 @@ BINARY_NAME=upstream-watch
 
 all: build
 build:
-	$(GOBUILD) -ldflags="-extldflags=-static" -tags sqlite_omit_load_extension -o $(BINARY_NAME) cmd/main.go
+	$(GOBUILD) -o $(BINARY_NAME) cmd/main.go
 test:
 	$(GOTEST) ./...
 clean:

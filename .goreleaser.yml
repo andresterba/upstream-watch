@@ -4,20 +4,14 @@ before:
 builds:
   - main: ./cmd/main.go
     env:
-      # needed for sqlite support
-      - CGO_ENABLED=1
-    ldflags:
-      - "-extldflags=-static"
-    tags:
-      - sqlite_omit_load_extension
+      - CGO_ENABLED=0
     goos:
       - linux
-      # not able to build for these plattforms, as sqlite needs cgo
-      #- windows
-      #- darwin
+      - windows
+      - darwin
     goarch:
-      # not able to build ARM or i386, as sqlite needs cgo
       - amd64
+      - arm64
 archives:
   - replacements:
       darwin: Darwin
