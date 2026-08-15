@@ -95,6 +95,7 @@ func (d *database) AddEntry(e Entry) error {
 		e.ModuleName, e.Commit, e.Updated,
 	)
 	if err != nil {
+		tx.Rollback()
 		return fmt.Errorf("failed to insert new entry %v", err)
 	}
 
