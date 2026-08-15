@@ -63,7 +63,7 @@ func (u *Updater) Update() error {
 		return err
 	}
 
-	u.persistExecutedUpdateInDB()
+	err = u.persistExecutedUpdateInDB()
 	if err != nil {
 		return err
 	}
@@ -89,6 +89,7 @@ func (u *Updater) isUpdateNecessary() (bool, error) {
 	}
 
 	runCommand := exec.Command("git", "diff", "--quiet", baselineEntry.Commit, "HEAD", "--", u.moduleName)
+	runCommand.Dir = u.moduleName
 	output, err := runCommand.CombinedOutput()
 	if err != nil {
 		var exitErr *exec.ExitError

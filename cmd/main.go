@@ -34,14 +34,15 @@ func updateSubdirectories(runPath string, loadedConfig *config.Config, db update
 	}
 
 	for _, subdirectory := range directories {
-		updateConfig, err := config.GetUpdateConfig(subdirectory + "/.update-hooks.yaml")
+		subdirectoryPath := path.Join(runPath, subdirectory)
+		updateConfig, err := config.GetUpdateConfig(subdirectoryPath + "/.update-hooks.yaml")
 		if err != nil {
 			log.Printf("Failed to update submodule %s: %+v", subdirectory, err)
 			continue
 		}
 
 		updater := updater.NewUpdater(
-			subdirectory,
+			subdirectoryPath,
 			updateConfig.PreUpdateCommands,
 			updateConfig.UpdateCommands,
 			updateConfig.PostUpdateCommands,

@@ -77,3 +77,32 @@ Of course, you can do almost anything in these hooks, depending on the needs of 
 
 * Pull access to upstream repository
 * `git` installed
+
+## Running upstream-watch itself as a container
+
+`upstream-watch` can run as a container, watching and driving the rest of your infrastructure the same way
+[watchtower](https://github.com/containrrr/watchtower) does. The image (`ghcr.io/andresterba/upstream-watch`)
+bundles `git` and a `docker`/`docker compose` CLI, and starts as root just long enough to grant its non-root
+user access to the bind-mounted `/var/run/docker.sock`, then drops privileges before running `upstream-watch`.
+
+Two things matter for a working setup:
+
+* Mount `/var/run/docker.sock` so the container can talk to the host's Docker daemon.
+* Mount your repository at the **same absolute path** inside the container as it has on the host, and pass
+  that path as the command argument. `upstream-watch` runs `docker compose` (and any other hook commands)
+  with that path as their working directory, but those commands are executed *by the host's Docker daemon*
+  — so any relative paths inside a service's `docker-compose.yml` (bind mounts, build contexts, env files)
+  only resolve correctly if the path the container sees matches the path the host daemon sees. Using the
+  default `/workdir` for both host and container path also works, but only because it happens to match on
+  both sides — the important thing is that container path == host path, not the specific name.
+
+```yaml
+services:
+  upstream-watch:
+    image: ghcr.io/andresterba/upstream-watch:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/deploy/services:/home/deploy/services
+    command: ["/home/deploy/services"]
+```
