@@ -318,3 +318,30 @@ func TestDatabase_Integration(t *testing.T) {
 		}
 	})
 }
+
+// TestNewDatabase_SurvivesRepeatedInitialization guards against a
+// regression where NewDatabase() fatally exited whenever the modules table
+// already existed on disk: the "table already exists" error string it
+// checked for didn't match the driver's actual error text ("SQL logic
+// error: table modules already exists (1)"), so every restart against an
+// already-initialized database file crash-looped instead of reusing the
+// existing table.
+func TestNewDatabase_SurvivesRepeatedInitialization(t *testing.T) {
+	dir := t.TempDir()
+
+	first := NewDatabase(dir)
+	if err := first.AddEntry(Entry{ModuleName: "mod", Commit: "c1", Updated: true}); err != nil {
+		t.Fatalf("AddEntry() on first NewDatabase() error = %v", err)
+	}
+
+	// Simulate a process restart against the same database file, where the
+	// modules table from the previous run already exists.
+	second := NewDatabase(dir)
+	got, err := second.GetEntry(Entry{ModuleName: "mod", Commit: "c1"})
+	if err != nil {
+		t.Fatalf("GetEntry() after re-initializing an existing database error = %v", err)
+	}
+	if !got.Updated {
+		t.Fatalf("GetEntry() = %+v, want the entry persisted before reinitialization", got)
+	}
+}

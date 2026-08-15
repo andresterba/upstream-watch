@@ -30,7 +30,7 @@ type Entry struct {
 	Updated    bool
 }
 
-const schema = `CREATE TABLE modules (
+const schema = `CREATE TABLE IF NOT EXISTS modules (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name text,
     git_commit text NULL,
@@ -53,18 +53,18 @@ func NewDatabase(runDir string) Database {
 
 	_, err = db.Exec(schema)
 	if err != nil {
-		if !(err.Error() == "table modules already exists") {
-			log.Fatalln(err)
-		}
+		log.Fatalln(err)
+	}
 
-		// The table already existed under some schema, but we don't know
-		// which one. Rather than guessing at what changed and trying to
-		// migrate it, fail loudly here with a fix a user can act on: a
-		// schema mismatch will otherwise resurface later as a much more
-		// confusing "no such column" error from a random query.
-		if err := verifyModulesSchema(db); err != nil {
-			log.Fatalf("%s has an incompatible modules table (%v). Delete the file and restart upstream-watch to recreate it.", dbPath, err)
-		}
+	// The table may already have existed, under some schema we don't know.
+	// Rather than guessing at what changed and trying to migrate it, fail
+	// loudly here with a fix a user can act on: a schema mismatch will
+	// otherwise resurface later as a much more confusing "no such column"
+	// error from a random query. This runs unconditionally (not just when
+	// CREATE TABLE reports the table already existing) since IF NOT EXISTS
+	// makes that outcome indistinguishable from a fresh create.
+	if err := verifyModulesSchema(db); err != nil {
+		log.Fatalf("%s has an incompatible modules table (%v). Delete the file and restart upstream-watch to recreate it.", dbPath, err)
 	}
 
 	return &database{
