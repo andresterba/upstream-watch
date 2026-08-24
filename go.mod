@@ -5,7 +5,7 @@ go 1.26
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	gopkg.in/yaml.v2 v2.4.0
-	modernc.org/sqlite v1.56.0
+	modernc.org/sqlite v1.57.0
 )
 
 require (
